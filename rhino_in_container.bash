@@ -105,6 +105,8 @@ docker kill rhino
 docker rm rhino
 docker run \
   --name rhino \
+  -v /etc/passwd:/etc/passwd:ro \
+  -v /etc/group:/etc/group:ro \
   -it \
   $MAP_RHINO_FOLDER \
   -v `pwd`/start-inside.bash:/rhino/start-inside.bash:ro \
