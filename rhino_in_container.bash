@@ -29,7 +29,7 @@ else
     echo "Enter a new IP address for zookeeper:"
     read ZK_IP
   else
-    echo "Enter a new IP address or press ENTER to accept: ${ZK_IP}"
+    echo "Enter a new IP address for zookeeper or press ENTER to accept: ${ZK_IP}"
     read _ZK_IP
     if [ "$_ZK_IP" != "" ]; then
       ZK_IP="$_ZK_IP"
@@ -61,7 +61,8 @@ cat > /tmp/rhino_config.json << EOL
     "host": "mongo",
     "port": 27017
   },
-  "zk_ip": "${ZK_IP}",
+  "zk_ip": "${ZK_IP}"
+}
 EOL
 
 if [ "$DB_RUNNING" = "1" ]; then
@@ -73,10 +74,12 @@ fi
 
 echo "#!/usr/bin/env bash" > ./start-inside.bash
 cat >> ./start-inside.bash << EOL
-  git git://githuib.com/appsoma/rhino.git
+  git clone git://github.com/appsoma/rhino rhino_repo
 	touch /rhino/mesos/__init__.py
 	export PYTHONPATH=/rhino/mesos_py_2
   cd /rhino
+  cp /rhino_repo/rhino.py .
+  cat /config/config.json
 	python -u rhino.py /config/config.json
 EOL
 chmod +x ./start-inside.bash
@@ -86,9 +89,10 @@ docker rm rhino
 docker run \
   --name rhino \
   -it \
+  -v `pwd`/start-inside.bash:/rhino/start-inside.bash:ro \
   -v /tmp/rhino_config.json:/config/config.json:ro \
   --link appsoma_mongo:mongo \
   -p 8899:8899 \
-  container-registry.appsoma.com/rhino \
-  ./source/start-inside.bash
+  container-registry.appsoma.com/rhino2 \
+  /rhino/start-inside.bash
 

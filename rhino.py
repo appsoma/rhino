@@ -31,7 +31,7 @@ mesos_driver = None
 def random_string(length=16):
 	return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(length))
 
-client = pymongo.MongoClient('mongodb://'+config['mongo']['host'],config['mongo']['port'])
+client = pymongo.MongoClient('mongodb://'+config['mongodb']['host'],config['mongodb']['port'])
 db = client.rhino
 
 class HttpHandler(BaseHTTPRequestHandler):
