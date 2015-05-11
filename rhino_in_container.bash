@@ -88,7 +88,7 @@ docker kill rhino
 docker rm rhino
 docker run \
   --name rhino \
-  -it \
+  -itd \
   -v `pwd`/start-inside.bash:/rhino/start-inside.bash:ro \
   -v /tmp/rhino_config.json:/config/config.json:ro \
   --link appsoma_mongo:mongo \
