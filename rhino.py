@@ -413,7 +413,10 @@ class AppsomaRhinoScheduler(Scheduler):
 			kill_those_that_depend_on( doc['name'] )
 
 		db.rhino_tasks.update( {'mesos_id':status.task_id.value}, { '$set':{'state':state,'retCode':ret_code} } )
-		driver.acknowledgeStatusUpdate(status)
+		try:
+			driver.acknowledgeStatusUpdate(status)
+		except:
+			pass
 
 
 def sigTerm(signum, frame):
