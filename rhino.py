@@ -13,13 +13,16 @@ import random
 import string
 from BaseHTTPServer import BaseHTTPRequestHandler,HTTPServer
 
-#import mesos_py_2 as mesos
 from mesos_py_2.native import MesosSchedulerDriver
 from mesos.interface import Scheduler
 from mesos.interface import mesos_pb2
 
-#import mesos.interface
-#print mesos.interface.__file__
+config_name = "rhino_config.json"
+if len(sys.argv) > 1:
+	config_name = sys.argv[1]
+
+with open( config_name ) as f:
+	config = json.loads( f.read() )
 
 mesos_lock = threading.Lock()
 
@@ -28,8 +31,8 @@ mesos_driver = None
 def random_string(length=16):
 	return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(length))
 
-client = pymongo.MongoClient('mongodb://localhost',27017)
-db = client.appsoma_rhino
+client = pymongo.MongoClient('mongodb://'+config['mongo']['host'],config['mongo']['port'])
+db = client.rhino
 
 class HttpHandler(BaseHTTPRequestHandler):
 	def returnException( self, e ):
@@ -428,7 +431,7 @@ if __name__ == '__main__':
 		mesos_driver = MesosSchedulerDriver(
 			AppsomaRhinoScheduler(),
 			framework,
-			"zk://10.240.243.155:2181/mesos"  # assumes running on the master
+			"zk://"+config['zk_ip']+":2181/mesos"
 		)
 		mesos_driver.run()
 	except KeyboardInterrupt:
