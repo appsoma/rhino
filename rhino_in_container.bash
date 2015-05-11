@@ -72,16 +72,33 @@ else
   docker run -v ${DB_FOLDER}:/data/db:rw --name appsoma_mongo -d mongo mongod --smallfiles
 fi
 
-echo "#!/usr/bin/env bash" > ./start-inside.bash
-cat >> ./start-inside.bash << EOL
-  git clone git://github.com/appsoma/rhino rhino_repo
-	touch /rhino/mesos/__init__.py
-	export PYTHONPATH=/rhino/mesos_py_2
-  cd /rhino
-  cp /rhino_repo/rhino.py .
-  cat /config/config.json
-	python -u rhino.py /config/config.json
+
+if [ "$1" = "--dev" ] || [ "$2" = "--dev" ]; then
+  CWD=`pwd`
+  MAP_RHINO_FOLDER="-v $CWD:/rhino_repo:ro"
+  echo "#!/usr/bin/env bash" > ./start-inside.bash
+  cat >> ./start-inside.bash << EOL
+    touch /rhino/mesos/__init__.py
+    export PYTHONPATH=/rhino/mesos_py_2
+    cd /rhino
+    cp /rhino_repo/rhino.py .
+    cat /config/config.json
+    python -u rhino.py /config/config.json
 EOL
+else
+  MAP_RHINO_FOLDER=""
+  echo "#!/usr/bin/env bash" > ./start-inside.bash
+  cat >> ./start-inside.bash << EOL
+    git clone git://github.com/appsoma/rhino rhino_repo
+    touch /rhino/mesos/__init__.py
+    export PYTHONPATH=/rhino/mesos_py_2
+    cd /rhino
+    cp /rhino_repo/rhino.py .
+    cat /config/config.json
+    python -u rhino.py /config/config.json
+EOL
+fi
+
 chmod +x ./start-inside.bash
 
 docker kill rhino
@@ -89,6 +106,7 @@ docker rm rhino
 docker run \
   --name rhino \
   -it \
+  $MAP_RHINO_FOLDER \
   -v `pwd`/start-inside.bash:/rhino/start-inside.bash:ro \
   -v /tmp/rhino_config.json:/config/config.json:ro \
   --link appsoma_mongo:mongo \
