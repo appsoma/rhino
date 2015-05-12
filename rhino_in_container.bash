@@ -2,7 +2,30 @@
 
 ZK_IP=`/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'`
 
-docker ps | grep appsoma_mongo
+DEVSTR="prod"
+if [ "$1" = "--dev" ] || [ "$2" = "--dev" ]; then
+  DEVSTR="dev"
+fi
+
+if [ "$1" = "--stop" ] || [ "$2" = "--stop" ]; then
+  echo "Killing previously running containers. Ignore any error messages..."
+  docker kill rhino_mongo_${DEVSTR}
+  docker rm rhino_mongo_${DEVSTR}
+  docker kill rhino_${DEVSTR}
+  docker rm rhino_${DEVSTR}
+  exit 0
+fi
+
+docker ps | grep welder_${DEVSTR}
+if [ "$?" = "0" ]; then
+  echo ""
+  echo "Killing previously running rhino container. Ignore any error messages..."
+  docker kill rhino_${DEVSTR}
+  docker rm rhino_${DEVSTR}
+fi
+
+
+docker ps | grep rhino_mongo_${DEVSTR}
 if [ "$?" = "0" ]; then
   DB_RUNNING=1
 else
@@ -55,7 +78,7 @@ else
   echo "DB_FOLDER=${DB_FOLDER}" >> rhino_container_config
 fi
 
-cat > /tmp/rhino_config.json << EOL
+cat > ./rhino_config.json << EOL
 {
   "mongodb": {
     "host": "mongo",
@@ -66,14 +89,14 @@ cat > /tmp/rhino_config.json << EOL
 EOL
 
 if [ "$DB_RUNNING" = "1" ]; then
-  echo "Appsoma mongo container already running."
+  echo "Rhino mongo container already running."
 else
-  echo "Starting appsoma_mongo container...."
-  docker run -v ${DB_FOLDER}:/data/db:rw --name appsoma_mongo -d mongo mongod --smallfiles
+  echo "Starting rhino_mongo_${DEVSTR} container...."
+  docker run -v ${DB_FOLDER}:/data/db:rw --name rhino_mongo_${DEVSTR} -d mongo mongod --smallfiles
 fi
 
 
-if [ "$1" = "--dev" ] || [ "$2" = "--dev" ]; then
+if [ "$DEVSTR" = "dev" ]; then
   CWD=`pwd`
   MAP_RHINO_FOLDER="-v $CWD:/rhino_repo:ro"
   echo "#!/usr/bin/env bash" > ./start-inside.bash
@@ -104,14 +127,14 @@ chmod +x ./start-inside.bash
 docker kill rhino
 docker rm rhino
 docker run \
-  --name rhino \
+  --name rhino_${DEVSTR} \
   -v /etc/passwd:/etc/passwd:ro \
   -v /etc/group:/etc/group:ro \
   -it \
   $MAP_RHINO_FOLDER \
   -v `pwd`/start-inside.bash:/rhino/start-inside.bash:ro \
-  -v /tmp/rhino_config.json:/config/config.json:ro \
-  --link appsoma_mongo:mongo \
+  -v `pwd`/rhino_config.json:/config/config.json:ro \
+  --link rhino_mongo_${DEVSTR}:mongo \
   -p 8899:8899 \
   container-registry.appsoma.com/rhino2 \
   /rhino/start-inside.bash
