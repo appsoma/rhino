@@ -2,7 +2,7 @@
 
 ZK_IP=`/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'`
 
-docker ps | grep appsoma_mongo
+docker ps | grep appsoma_mongo > /dev/null
 if [ "$?" = "0" ]; then
   DB_RUNNING=1
 else
@@ -101,8 +101,12 @@ fi
 
 chmod +x ./start-inside.bash
 
-docker kill rhino
-docker rm rhino
+docker ps | grep rhino
+if [ "$?" = "0" ]; then
+  docker kill rhino
+  docker rm rhino
+fi
+
 docker run \
   --name rhino \
   -v /etc/passwd:/etc/passwd:ro \
