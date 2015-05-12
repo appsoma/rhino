@@ -24,8 +24,7 @@ if [ "$?" = "0" ]; then
   docker rm rhino_${DEVSTR}
 fi
 
-
-docker ps | grep rhino_mongo_${DEVSTR}
+docker ps | grep rhino_mongo_${DEVSTR} > /dev/null
 if [ "$?" = "0" ]; then
   DB_RUNNING=1
 else
@@ -124,8 +123,12 @@ fi
 
 chmod +x ./start-inside.bash
 
-docker kill rhino
-docker rm rhino
+docker ps | grep rhino
+if [ "$?" = "0" ]; then
+  docker kill rhino
+  docker rm rhino
+fi
+
 docker run \
   --name rhino_${DEVSTR} \
   -v /etc/passwd:/etc/passwd:ro \
