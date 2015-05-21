@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-ZK_IP=`/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'`
+ZK_IP=`/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'`:2181
 
 DEVSTR="prod"
 if [ "$1" = "--dev" ] || [ "$2" = "--dev" ]; then
@@ -129,16 +129,15 @@ if [ "$?" = "0" ]; then
   docker rm rhino
 fi
 
-docker run \
+echo docker run \
   --name rhino_${DEVSTR} \
   -v /etc/passwd:/etc/passwd:ro \
   -v /etc/group:/etc/group:ro \
-  -it \
   $MAP_RHINO_FOLDER \
   -v `pwd`/start-inside.bash:/rhino/start-inside.bash:ro \
   -v `pwd`/rhino_config.json:/config/config.json:ro \
   --link rhino_mongo_${DEVSTR}:mongo \
   -p 8899:8899 \
   container-registry.appsoma.com/rhino2 \
-  /rhino/start-inside.bash
+  /rhino/start-inside.bash &
 

@@ -432,7 +432,7 @@ if __name__ == '__main__':
 		mesos_driver = MesosSchedulerDriver(
 			AppsomaRhinoScheduler(),
 			framework,
-			"zk://"+config['zk_ip']+":2181/mesos"
+			"zk://" + config['zk_ip'] + "/mesos"
 		)
 		mesos_driver.run()
 	except KeyboardInterrupt:
