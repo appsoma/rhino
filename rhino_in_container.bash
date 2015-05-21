@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-ZK_IP=`/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'`
+ZK_IP=`/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'`:2181
 
 DEVSTR="prod"
 if [ "$1" = "--dev" ] || [ "$2" = "--dev" ]; then
@@ -111,7 +111,7 @@ else
   MAP_RHINO_FOLDER=""
   echo "#!/usr/bin/env bash" > ./start-inside.bash
   cat >> ./start-inside.bash << EOL
-    git clone git://github.com/appsoma/rhino rhino_repo
+    git clone git://github.com/appsoma/rhino /rhino_repo
     touch /rhino/mesos/__init__.py
     export PYTHONPATH=/rhino/mesos_py_2
     cd /rhino
@@ -129,16 +129,30 @@ if [ "$?" = "0" ]; then
   docker rm rhino
 fi
 
-docker run \
-  --name rhino_${DEVSTR} \
-  -v /etc/passwd:/etc/passwd:ro \
-  -v /etc/group:/etc/group:ro \
-  -it \
-  $MAP_RHINO_FOLDER \
-  -v `pwd`/start-inside.bash:/rhino/start-inside.bash:ro \
-  -v `pwd`/rhino_config.json:/config/config.json:ro \
-  --link rhino_mongo_${DEVSTR}:mongo \
-  -p 8899:8899 \
-  container-registry.appsoma.com/rhino2 \
-  /rhino/start-inside.bash
-
+if [ "$DEVSTR" = "dev" ]; then
+  docker run \
+    --name rhino_${DEVSTR} \
+    -v /etc/passwd:/etc/passwd:ro \
+    -v /etc/group:/etc/group:ro \
+    -it \
+    $MAP_RHINO_FOLDER \
+    -v `pwd`/start-inside.bash:/rhino/start-inside.bash:ro \
+    -v `pwd`/rhino_config.json:/config/config.json:ro \
+    --link rhino_mongo_${DEVSTR}:mongo \
+    -p 8899:8899 \
+    container-registry.appsoma.com/rhino2 \
+    /rhino/start-inside.bash
+else
+  docker run \
+    --name rhino_${DEVSTR} \
+    -v /etc/passwd:/etc/passwd:ro \
+    -v /etc/group:/etc/group:ro \
+    -d \
+    $MAP_RHINO_FOLDER \
+    -v `pwd`/start-inside.bash:/rhino/start-inside.bash:ro \
+    -v `pwd`/rhino_config.json:/config/config.json:ro \
+    --link rhino_mongo_${DEVSTR}:mongo \
+    -p 8899:8899 \
+    container-registry.appsoma.com/rhino2 \
+    /rhino/start-inside.bash
+fi
