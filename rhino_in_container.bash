@@ -20,7 +20,7 @@ if [ "$1" = "--stop" ] || [ "$2" = "--stop" ] || [ "$1" = "--restart" ] || [ "$2
 fi
 
 docker ps | grep rhino_mongo_${DEVSTR} > /dev/null
-if [ $? = 0 ]; then
+if [ "$?" = "0" ]; then
   DB_RUNNING=1
 else
   docker rm rhino_mongo_${DEVSTR} 2> /dev/null
@@ -28,7 +28,7 @@ else
 fi
 
 docker ps | grep rhino_prod > /dev/null
-if [ $? = 0 ]; then
+if [ "$?" = "0" ]; then
   RHINO_RUNNING=1
   echo "Rhino and Mongo already running"
 else
@@ -36,7 +36,7 @@ else
   RHINO_RUNNING=0
 fi
 
-if [ $DB_RUNNING = 1 ]  && [ $RHINO_RUNNING = 1 ]; then
+if [ "$DB_RUNNING" = "1" ]  && [ "$RHINO_RUNNING" = "1" ]; then
   echo "Already Running"
   exit 0
 fi
@@ -105,7 +105,7 @@ EOL
     docker run -v ${DB_FOLDER}:/data/db:rw --name rhino_mongo_${DEVSTR} -d mongo mongod --smallfiles
   fi
 
-  if [ $RHINO_RUNNING -eq 1 ]; then
+  if [ "$RHINO_RUNNING" = "1" ]; then
     echo "Rhino container already running"
     exit 0
   fi
