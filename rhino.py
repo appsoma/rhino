@@ -363,11 +363,21 @@ class AppsomaRhinoScheduler(Scheduler):
 		state = "UNKNOWN MESOS STATE"
 		ret_code = -9999
 		kill_depends = False
+		message = ''
 
 		if status.state == mesos_pb2.TASK_RUNNING:
 			state = "RUNNING"
 
-		if status.state == mesos_pb2.TASK_FINISHED or status.state == mesos_pb2.TASK_FAILED:
+		elif status.state == mesos_pb2.TASK_KILLED:
+			state = 'KILLED'
+			kill_depends = True
+
+		elif status.state == mesos_pb2.TASK_LOST:
+			state = 'ERROR'
+			message = status.message
+			kill_depends = True
+
+		elif status.state == mesos_pb2.TASK_FINISHED or status.state == mesos_pb2.TASK_FAILED:
 			match = re.search( r'^Command exited with status (\d+)$', status.message )
 			if match:
 				ret_code = int(match.group(1))
@@ -379,11 +389,12 @@ class AppsomaRhinoScheduler(Scheduler):
 				state = 'SUCCESS'
 			else:
 				state = 'ERROR'
+				message = status.message
 				kill_depends = True
 
-		elif status.state == mesos_pb2.TASK_KILLED:
-			state = 'KILLED'
-			kill_depends = True
+		else:
+			state = 'ERROR'
+			message = "Unknown mesos status code "+str(status.state)
 
 		if kill_depends:
 			tasks = db.rhino_tasks.find( { 'state':'PENDING' } )
@@ -412,7 +423,7 @@ class AppsomaRhinoScheduler(Scheduler):
 
 			kill_those_that_depend_on( doc['name'] )
 
-		db.rhino_tasks.update( {'mesos_id':status.task_id.value}, { '$set':{'state':state,'retCode':ret_code} } )
+		db.rhino_tasks.update( {'mesos_id':status.task_id.value}, { '$set':{'state':state,'retCode':ret_code,'message':message} } )
 		if config.get('ack_update',False):
 			driver.acknowledgeStatusUpdate(status)
 

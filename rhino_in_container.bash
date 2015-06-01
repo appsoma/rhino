@@ -48,13 +48,13 @@ else
   fi
 
   if [ "$ZK_IP" = "" ]; then
-    echo "Enter a new IP address for zookeeper:"
+    echo "Enter a new IP address and port for zookeeper:"
     read ZK_IP
   else
-    echo "Enter a new IP address for zookeeper or press ENTER to accept: ${ZK_IP}"
+    echo "Enter a new IP address and port for zookeeper or press ENTER to accept: ${ZK_IP}:2181"
     read _ZK_IP
     if [ "$_ZK_IP" != "" ]; then
-      ZK_IP="$_ZK_IP"
+      ZK_IP="$_ZK_IP:2181"
     fi
   fi
 
