@@ -2,19 +2,53 @@
 
 ZK_IP=`/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'`:2181
 
-DEVSTR="prod"
-if [ "$1" = "--dev" ] || [ "$2" = "--dev" ]; then
-  DEVSTR="dev"
+while [[ $# > 0 ]]
+do
+  key="$1"
+  case $key in
+    --dev)
+      DEV="1"
+    ;;
+    --start)
+      START=1
+    ;;
+    --stop)
+      STOP=1
+    ;;
+    --restart)
+      START=1
+      STOP=1
+    ;;
+    --no-questions)
+      NOQUESTIONS=1
+    ;;
+    *)
+      echo "Unknown command link option $1"
+      exit 1
+    ;;
+  esac
+  shift
+done
+
+if [ "$START" != "1" ] && [ "$STOP" != "1" ]; then
+  echo "You must specify either --start, --stop, or --restart"
+  exit 1
 fi
 
-if [ "$1" = "--stop" ] || [ "$2" = "--stop" ] || [ "$1" = "--restart" ] || [ "$2" = "--restart" ]; then
+if [ "$DEV" = "1" ]; then
+  DEVSTR="dev"
+else
+  DEVSTR="prod"
+fi
+
+if [ "$STOP" = "1" ]; then
   echo "Killing previously running containers. Ignore any error messages..."
   docker kill rhino_mongo_${DEVSTR}
   docker rm rhino_mongo_${DEVSTR}
   docker kill rhino_${DEVSTR}
   docker rm rhino_${DEVSTR}
   echo "Stopped"
-  if [ "$1" = "--stop" ] || [ "$2" = "--stop" ]; then
+  if [ "$START" != "1" ]; then
     exit 0
   fi
 fi
@@ -41,8 +75,8 @@ if [ "$DB_RUNNING" = "1" ]  && [ "$RHINO_RUNNING" = "1" ]; then
   exit 0
 fi
 
-if [ "$1" = "--start" ] || [ "$2" = "--start" ] || [ "$1" = "--restart" ] || [ "$2" = "--restart" ]; then
-  if [ "$1" = "--no-questions" ] || [ "$2" = "--no-questions" ]; then
+if [ "$START" = "1" ]; then
+  if [ "$NOQUESTIONS" = "1" ]; then
     if [ -f "./rhino_container_config" ]; then
       source ./rhino_container_config
     else
@@ -120,7 +154,7 @@ EOL
       cd /rhino
       cp /rhino_repo/rhino.py .
       cat /config/config.json
-      python -u rhino.py /config/config.json
+      python -u rhino.py /config/config.json &> rhino.log
 EOL
   else
     MAP_RHINO_FOLDER=""
@@ -132,7 +166,7 @@ EOL
       cd /rhino
       cp /rhino_repo/rhino.py .
       cat /config/config.json
-      python -u rhino.py /config/config.json
+      python -u rhino.py /config/config.json &> rhino.log
 EOL
   fi
 
@@ -160,6 +194,7 @@ EOL
       $MAP_RHINO_FOLDER \
       -v `pwd`/start-inside.bash:/rhino/start-inside.bash:ro \
       -v `pwd`/rhino_config.json:/config/config.json:ro \
+      -v `pwd`/rhino.log:/rhino/rhino.log:rw \
       --link rhino_mongo_${DEVSTR}:mongo \
       -p 8899:8899 \
       container-registry.appsoma.com/rhino2 \
