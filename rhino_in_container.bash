@@ -157,6 +157,7 @@ EOL
       python -u rhino.py /config/config.json &> rhino.log
 EOL
   else
+    touch rhino.log
     MAP_RHINO_FOLDER=""
     echo "#!/usr/bin/env bash" > ./start-inside.bash
     cat >> ./start-inside.bash << EOL
