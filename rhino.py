@@ -82,10 +82,10 @@ class HttpHandler(BaseHTTPRequestHandler):
 				# @TODO: Fix this reference to look up the master in zookeeper
 				# This is assuming that master and zk are on the same machine which is wrong.
 			last_registry = json.loads( urllib2.urlopen("http://"+ip+":5050/registrar(1)/registry").read() )
-			print last_registry
+			print json.dumps(last_registry,indent=4)
 		except Exception, e:
+			print "EXCEPTION", e
 			pass
-
 
 		try:
 			if self.path == '/tasks':
@@ -169,6 +169,7 @@ class HttpHandler(BaseHTTPRequestHandler):
 			else:
 				raise Exception("Not found")
 		except Exception as e:
+			print "EXCEPTION2", e
 			self.returnException( e )
 
 
