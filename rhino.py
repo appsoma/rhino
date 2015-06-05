@@ -11,7 +11,7 @@ import re
 import pymongo
 import random
 import string
-import utllib2
+import urllib2
 from BaseHTTPServer import BaseHTTPRequestHandler,HTTPServer
 
 from mesos_py_2.native import MesosSchedulerDriver
