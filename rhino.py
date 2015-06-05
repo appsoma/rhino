@@ -126,6 +126,7 @@ class HttpHandler(BaseHTTPRequestHandler):
 								mem = int( res['scalar']['value'] )
 							if res['disk'] == 'disk':
 								disk = int( res['scalar']['value'] )
+						print "REQ", post['requirements']
 						if int( post['requirements']['cpus'] ) <= cpus and int( post['requirements']['mem'] ) <= mem and int( post['requirements']['disk'] ) <= disk:
 							found_slave_that_fits = True
 							break
