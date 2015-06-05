@@ -154,10 +154,10 @@ class HttpHandler(BaseHTTPRequestHandler):
 				mem.type = mesos_pb2.Value.SCALAR
 				mem.scalar.value = int( post['requirements']['mem'] )
 
-				disk = request.resources.add()
-				disk.name = "disk"
-				disk.type = mesos_pb2.Value.SCALAR
-				disk.scalar.value = int( post['requirements']['disk'] )
+#				disk = request.resources.add()
+#				disk.name = "disk"
+#				disk.type = mesos_pb2.Value.SCALAR
+#				disk.scalar.value = int( post['requirements']['disk'] )
 
 				mesos_lock.acquire()
 				try:
