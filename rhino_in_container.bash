@@ -154,7 +154,7 @@ EOL
       cd /rhino
       cp /rhino_repo/rhino.py .
       cat /config/config.json
-      python -u rhino.py /config/config.json &> rhino.log
+      python -u rhino.py /config/config.json
 EOL
   else
     touch rhino.log

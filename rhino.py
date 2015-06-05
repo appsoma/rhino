@@ -11,11 +11,13 @@ import re
 import pymongo
 import random
 import string
+import utllib2
 from BaseHTTPServer import BaseHTTPRequestHandler,HTTPServer
 
 from mesos_py_2.native import MesosSchedulerDriver
 from mesos.interface import Scheduler
 from mesos.interface import mesos_pb2
+
 
 config_name = "rhino_config.json"
 if len(sys.argv) > 1:
@@ -33,6 +35,8 @@ def random_string(length=16):
 
 client = pymongo.MongoClient('mongodb://'+config['mongodb']['host'],config['mongodb']['port'])
 db = client.rhino
+
+last_registry = None
 
 class HttpHandler(BaseHTTPRequestHandler):
 	def returnException( self, e ):
@@ -73,6 +77,17 @@ class HttpHandler(BaseHTTPRequestHandler):
 		"""
 
 		try:
+			global last_registry
+			ip = config['zk_ip'].split(':')[0]
+				# @TODO: Fix this reference to look up the master in zookeeper
+				# This is assuming that master and zk are on the same machine which is wrong.
+			last_registry = json.loads( urllib2.urlopen("http://"+ip+":5050/registrar(1)/registry").read() )
+			print last_registry
+		except Exception, e:
+			pass
+
+
+		try:
 			if self.path == '/tasks':
 				content_len = int(self.headers.getheader('content-length', 0))
 				post = json.loads( self.rfile.read(content_len) )
@@ -96,6 +111,23 @@ class HttpHandler(BaseHTTPRequestHandler):
 							if not isinstance(volume,basestring):
 								raise Exception( "'volumes' must be a list of strings" )
 
+				"""
+				# CHECK if there exists any slave that is capable of handling the requested task
+				# IF not then we need to return a friendly error.
+				if last_registry:
+					for slave in last_registry['slaves']['slaves']:
+						cpus = 0
+						mem = 0
+						disk = 0
+						for res in slave['info']['resources']:
+							if res['name'] == 'cpus':
+								cpus = int( res['scalar']['value'] )
+							if res['name'] == 'mem':
+								mem = int( res['scalar']['value'] )
+							if res['disk'] == 'disk':
+								disk = int( res['scalar']['value'] )
+						if 
+				"""
 
 				post['state'] = 'PENDING'
 
@@ -115,12 +147,17 @@ class HttpHandler(BaseHTTPRequestHandler):
 				cpus = request.resources.add()
 				cpus.name = "cpus"
 				cpus.type = mesos_pb2.Value.SCALAR
-				cpus.scalar.value = 1
+				cpus.scalar.value = int( post['requirements']['cpus'] )
 
 				mem = request.resources.add()
 				mem.name = "mem"
 				mem.type = mesos_pb2.Value.SCALAR
-				mem.scalar.value = 512
+				mem.scalar.value = int( post['requirements']['mem'] )
+
+				disk = request.resources.add()
+				disk.name = "disk"
+				disk.type = mesos_pb2.Value.SCALAR
+				disk.scalar.value = int( post['requirements']['disk'] )
 
 				mesos_lock.acquire()
 				try:
