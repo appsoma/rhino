@@ -128,9 +128,10 @@ class HttpHandler(BaseHTTPRequestHandler):
 							print "REQ4"
 							if res['name'] == 'mem':
 								mem = int( res['scalar']['value'] )
-							print "REQ5"
+							print "REQ5", res
 							if res['disk'] == 'disk':
 								disk = int( res['scalar']['value'] )
+							print "REQ6"
 						print "REQ", post['requirements']
 						if int( post['requirements']['cpus'] ) <= cpus and int( post['requirements']['mem'] ) <= mem and int( post['requirements']['disk'] ) <= disk:
 							found_slave_that_fits = True
