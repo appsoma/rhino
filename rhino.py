@@ -76,6 +76,7 @@ class HttpHandler(BaseHTTPRequestHandler):
 		}
 		"""
 
+		"""
 		try:
 			global last_registry
 			ip = config['zk_ip'].split(':')[0]
@@ -86,6 +87,7 @@ class HttpHandler(BaseHTTPRequestHandler):
 		except Exception, e:
 			print "EXCEPTION", e
 			pass
+		"""
 
 		try:
 			if self.path == '/tasks':
