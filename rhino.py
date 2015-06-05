@@ -76,7 +76,6 @@ class HttpHandler(BaseHTTPRequestHandler):
 		}
 		"""
 
-		"""
 		try:
 			global last_registry
 			ip = config['zk_ip'].split(':')[0]
@@ -85,9 +84,8 @@ class HttpHandler(BaseHTTPRequestHandler):
 			last_registry = json.loads( urllib2.urlopen("http://"+ip+":5050/registrar(1)/registry").read() )
 			print json.dumps(last_registry,indent=4)
 		except Exception, e:
-			print "EXCEPTION", e
+			print "EXCEPTION1", e
 			pass
-		"""
 
 		try:
 			if self.path == '/tasks':
@@ -113,10 +111,10 @@ class HttpHandler(BaseHTTPRequestHandler):
 							if not isinstance(volume,basestring):
 								raise Exception( "'volumes' must be a list of strings" )
 
-				"""
 				# CHECK if there exists any slave that is capable of handling the requested task
 				# IF not then we need to return a friendly error.
 				if last_registry:
+					found_slave_that_fits = False
 					for slave in last_registry['slaves']['slaves']:
 						cpus = 0
 						mem = 0
@@ -128,8 +126,14 @@ class HttpHandler(BaseHTTPRequestHandler):
 								mem = int( res['scalar']['value'] )
 							if res['disk'] == 'disk':
 								disk = int( res['scalar']['value'] )
-						if 
-				"""
+						if int( post['requirements']['cpus'] ) <= cpus
+							and int( post['requirements']['mem'] ) <= mem
+							and int( post['requirements']['disk'] ) <= disk
+						:
+							found_slave_that_fits = True
+							break
+					if not found_slave_that_fits:
+						raise Exception("No slave is capable of handling that request")
 
 				post['state'] = 'PENDING'
 
@@ -165,14 +169,13 @@ class HttpHandler(BaseHTTPRequestHandler):
 				try:
 					mesos_driver.requestResources( [ request ] )
 				except Exception as e:
-					print "EXCEPTION2", e
 					raise e
 				finally:
 					mesos_lock.release()
 			else:
 				raise Exception("Not found")
 		except Exception as e:
-			print "EXCEPTION3", e
+			print "EXCEPTION2", e
 			self.returnException( e )
 
 
