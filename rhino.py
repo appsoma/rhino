@@ -116,23 +116,16 @@ class HttpHandler(BaseHTTPRequestHandler):
 				if last_registry:
 					found_slave_that_fits = False
 					for slave in last_registry['slaves']['slaves']:
-						print "REQ1"
 						cpus = 0
 						mem = 0
 						disk = 0
-						print "REQ2"
 						for res in slave['info']['resources']:
-							print "REQ3"
 							if res['name'] == 'cpus':
 								cpus = int( res['scalar']['value'] )
-							print "REQ4"
 							if res['name'] == 'mem':
 								mem = int( res['scalar']['value'] )
-							print "REQ5", res
-							if res['disk'] == 'disk':
+							if res['name'] == 'disk':
 								disk = int( res['scalar']['value'] )
-							print "REQ6"
-						print "REQ", post['requirements']
 						if int( post['requirements']['cpus'] ) <= cpus and int( post['requirements']['mem'] ) <= mem and int( post['requirements']['disk'] ) <= disk:
 							found_slave_that_fits = True
 							break
