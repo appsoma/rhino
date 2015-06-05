@@ -163,7 +163,7 @@ class HttpHandler(BaseHTTPRequestHandler):
 
 				mesos_lock.acquire()
 				try:
-					mesos_driver.requestResources( request )
+					mesos_driver.requestResources( [ request ] )
 				except Exception as e:
 					print "EXCEPTION2", e
 					raise e
