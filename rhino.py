@@ -146,6 +146,8 @@ class HttpHandler(BaseHTTPRequestHandler):
 				self.wfile.write( json_block )
 
 				# Request
+				"""
+				@HACK for test
 				request = mesos_pb2.Request()
 				cpus = request.resources.add()
 				cpus.name = "cpus"
@@ -169,6 +171,7 @@ class HttpHandler(BaseHTTPRequestHandler):
 					raise e
 				finally:
 					mesos_lock.release()
+				"""
 			else:
 				raise Exception("Not found")
 		except Exception as e:
@@ -206,6 +209,11 @@ class HttpHandler(BaseHTTPRequestHandler):
 			match = re.search( r'^/tasks/(.*)$', self.path )
 			if match:
 				task = db.rhino_tasks.find_one( { 'name':match.group(1) } )
+
+				if task['state'] == "PENDING":
+					# It hasn't made it to mesos yet, mark as killed
+					db.rhino_tasks.update( { 'name':match.group(1) }, { '$set':{'state':'KILLED'} } )
+
 				mesos_lock.acquire()
 				try:
 					task_id = mesos_pb2.TaskID()
