@@ -178,9 +178,9 @@ EOL
     CWD=`pwd`
     if [ ! -e "$LOG_DIR" ]; then
   	  mkdir -p "$LOG_DIR"
-  	  touch ${LOG_DIR}/rhino.log
-  	  echo "Starting at $(date)" >> ${LOG_DIR}/rhino.log
-    fi
+  	fi
+  	touch ${LOG_DIR}/rhino.log
+  	echo "Starting at $(date)" >> ${LOG_DIR}/rhino.log
 
     MAP_RHINO_FOLDER="-v $CWD:/rhino_repo:ro"
     echo "#!/usr/bin/env bash" > ./start-inside.bash
@@ -194,10 +194,11 @@ EOL
 EOL
   else
     if [ ! -e "$LOG_DIR" ]; then
-  	  mkdir -p "$LOG_DIR"
-  	  touch ${LOG_DIR}/rhino.log
-  	  echo "Starting at $(date)" >> ${LOG_DIR}/rhino.log
-    fi
+  	  mkdir -p ${LOG_DIR}
+  	fi
+  	touch ${LOG_DIR}/rhino.log
+  	echo "Starting at $(date)" >> ${LOG_DIR}/rhino.log
+
     MAP_RHINO_FOLDER=""
     echo "#!/usr/bin/env bash" > ./start-inside.bash
     cat >> ./start-inside.bash << EOL
@@ -227,7 +228,7 @@ EOL
       container-registry.appsoma.com/rhino2 \
       /rhino/start-inside.bash
   else
-    docker run \
+    echo docker run \
       --name rhino_${DEVSTR} \
       -v /etc/passwd:/etc/passwd:ro \
       -v /etc/group:/etc/group:ro \
