@@ -190,7 +190,7 @@ EOL
       cd /rhino
       cp /rhino_repo/rhino.py .
       cat /config/config.json
-      python -u rhino.py /config/config.json >> rhino.log 2&>1
+      python -u rhino.py /config/config.json >> rhino.log 2>&1
 EOL
   else
     if [ ! -e "$LOG_DIR" ]; then
@@ -208,7 +208,7 @@ EOL
       cd /rhino
       cp /rhino_repo/rhino.py .
       cat /config/config.json
-      python -u rhino.py /config/config.json >> rhino.log 2&>1
+      python -u rhino.py /config/config.json >> rhino.log 2>&1
 EOL
   fi
 
