@@ -179,7 +179,7 @@ EOL
     if [ ! -e "$LOG_DIR" ]; then
   	  mkdir -p "$LOG_DIR"
   	  touch ${LOG_DIR}/rhino.log
-  	  echo "Starting at $(date)"
+  	  echo "Starting at $(date)" >> ${LOG_DIR}/rhino.log
     fi
 
     MAP_RHINO_FOLDER="-v $CWD:/rhino_repo:ro"
@@ -196,7 +196,7 @@ EOL
     if [ ! -e "$LOG_DIR" ]; then
   	  mkdir -p "$LOG_DIR"
   	  touch ${LOG_DIR}/rhino.log
-  	  echo "Starting at $(date)"
+  	  echo "Starting at $(date)" >> ${LOG_DIR}/rhino.log
     fi
     MAP_RHINO_FOLDER=""
     echo "#!/usr/bin/env bash" > ./start-inside.bash
