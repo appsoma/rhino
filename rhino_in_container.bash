@@ -228,7 +228,7 @@ EOL
       container-registry.appsoma.com/rhino2 \
       /rhino/start-inside.bash
   else
-    echo docker run \
+    docker run \
       --name rhino_${DEVSTR} \
       -v /etc/passwd:/etc/passwd:ro \
       -v /etc/group:/etc/group:ro \
