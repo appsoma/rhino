@@ -178,6 +178,7 @@ EOL
 EOL
   elif [ "$DEVSTR" = "dev" ]; then
     CWD=`pwd`
+    touch ${LOG_DIR}/rhino.log
     MAP_RHINO_FOLDER="-v $CWD:/rhino_repo:ro"
     echo "#!/usr/bin/env bash" > ./start-inside.bash
     cat >> ./start-inside.bash << EOL
