@@ -26,7 +26,7 @@ if len(sys.argv) > 1:
 with open( config_name ) as f:
 	config = json.loads( f.read() )
 
-mesos_master = subprocess.check_output( [ "mesos-resolve", "zk://" + config['zk_ip'] + "/mesos" ], stderr=subprocess.PIPE )
+mesos_master = subprocess.check_output( [ "/usr/bin/mesos-resolve", "zk://" + config['zk_ip'] + "/mesos" ], stderr=subprocess.PIPE )
 mesos_master = mesos_master.strip()
 print "MESOS MASTER:", mesos_master
 
