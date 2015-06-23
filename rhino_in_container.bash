@@ -131,9 +131,7 @@ if [ "$START" = "1" ]; then
     fi
   fi
 
-  if [ ! -e "$LOG_DIR" ]; then
-  	mkdir -p "$LOG_DIR"
-  fi
+
 
   echo ""
   echo "Saving your configuration to rhino_container_config..."
@@ -178,7 +176,12 @@ EOL
 EOL
   elif [ "$DEVSTR" = "dev" ]; then
     CWD=`pwd`
-    touch ${LOG_DIR}/rhino.log
+    if [ ! -e "$LOG_DIR" ]; then
+  	  mkdir -p "$LOG_DIR"
+  	  touch ${LOG_DIR}/rhino.log
+  	  echo "Starting at $(date)"
+    fi
+
     MAP_RHINO_FOLDER="-v $CWD:/rhino_repo:ro"
     echo "#!/usr/bin/env bash" > ./start-inside.bash
     cat >> ./start-inside.bash << EOL
@@ -187,10 +190,14 @@ EOL
       cd /rhino
       cp /rhino_repo/rhino.py .
       cat /config/config.json
-      python -u rhino.py /config/config.json >> ${LOG_DIR}/rhino.log 2&>1
+      python -u rhino.py /config/config.json >> rhino.log 2&>1
 EOL
   else
-    touch rhino.log
+    if [ ! -e "$LOG_DIR" ]; then
+  	  mkdir -p "$LOG_DIR"
+  	  touch ${LOG_DIR}/rhino.log
+  	  echo "Starting at $(date)"
+    fi
     MAP_RHINO_FOLDER=""
     echo "#!/usr/bin/env bash" > ./start-inside.bash
     cat >> ./start-inside.bash << EOL
@@ -200,7 +207,7 @@ EOL
       cd /rhino
       cp /rhino_repo/rhino.py .
       cat /config/config.json
-      python -u rhino.py /config/config.json ${LOG_DIR}/rhino.log 2&>1
+      python -u rhino.py /config/config.json >> rhino.log 2&>1
 EOL
   fi
 
