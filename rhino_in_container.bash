@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
 ZK_IP=`/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'`:2181
+LOG_DIR=`pwd`
+DEBUG=0
 
 while [[ $# > 0 ]]
 do
@@ -21,6 +23,9 @@ do
     ;;
     --no-questions)
       NOQUESTIONS=1
+    ;;
+    --debug)
+      DEBUG=1
     ;;
     *)
       echo "Unknown command link option $1"
@@ -114,12 +119,27 @@ if [ "$START" = "1" ]; then
         fi
       fi
     fi
+    if [ "$LOG_DIR" = "" ]; then
+    	echo "Enter the log directory:"
+    	read LOG_DIR
+    else
+    	echo "Enter a new log directory or press ENTER to accept: ${LOG_DIR}"
+    	read _LOG_DIR
+    	if [ "$_LOG_DIR" = "" ]; then
+    		LOG_DIR="$_LOG_DIR"
+    	fi
+    fi
+  fi
+
+  if [ ! -e "$LOG_DIR" ]; then
+  	mkdir -p "$LOG_DIR"
   fi
 
   echo ""
   echo "Saving your configuration to rhino_container_config..."
   echo "ZK_IP=${ZK_IP}" > rhino_container_config
   echo "DB_FOLDER=${DB_FOLDER}" >> rhino_container_config
+  echo "LOG_DIR=${LOG_DIR}" >> rhino_container_config
 
   cat > ./rhino_config.json << EOL
   {
@@ -144,7 +164,7 @@ EOL
   fi
 
 
-  if [ "$DEVSTR" = "dev" ]; then
+  if [ "$DEVSTR" = "dev" ] && [ ${DEBUG} = 1 ]; then
     CWD=`pwd`
     MAP_RHINO_FOLDER="-v $CWD:/rhino_repo:ro"
     echo "#!/usr/bin/env bash" > ./start-inside.bash
@@ -155,6 +175,18 @@ EOL
       cp /rhino_repo/rhino.py .
       cat /config/config.json
       python -u rhino.py /config/config.json
+EOL
+  elif [ "$DEVSTR" = "dev" ]; then
+    CWD=`pwd`
+    MAP_RHINO_FOLDER="-v $CWD:/rhino_repo:ro"
+    echo "#!/usr/bin/env bash" > ./start-inside.bash
+    cat >> ./start-inside.bash << EOL
+      touch /rhino/mesos/__init__.py
+      export PYTHONPATH=/rhino/mesos_py_2
+      cd /rhino
+      cp /rhino_repo/rhino.py .
+      cat /config/config.json
+      python -u rhino.py /config/config.json >> ${LOG_DIR}/rhino.log 2&>1
 EOL
   else
     touch rhino.log
@@ -167,13 +199,13 @@ EOL
       cd /rhino
       cp /rhino_repo/rhino.py .
       cat /config/config.json
-      python -u rhino.py /config/config.json &> rhino.log
+      python -u rhino.py /config/config.json ${LOG_DIR}/rhino.log 2&>1
 EOL
   fi
 
   chmod +x ./start-inside.bash
 
-  if [ "$DEVSTR" = "dev" ]; then
+  if [ "$DEVSTR" = "dev" ] && [ ${DEBUG} = 1 ]; then
     docker run \
       --name rhino_${DEVSTR} \
       -v /etc/passwd:/etc/passwd:ro \
@@ -195,7 +227,7 @@ EOL
       $MAP_RHINO_FOLDER \
       -v `pwd`/start-inside.bash:/rhino/start-inside.bash:ro \
       -v `pwd`/rhino_config.json:/config/config.json:ro \
-      -v `pwd`/rhino.log:/rhino/rhino.log:rw \
+      -v $LOG_DIR/rhino.log:/rhino/rhino.log:rw \
       --link rhino_mongo_${DEVSTR}:mongo \
       -p 8899:8899 \
       container-registry.appsoma.com/rhino2 \
