@@ -153,6 +153,7 @@ EOL
     echo "Rhino mongo container already running."
   else
     echo "Starting rhino_mongo_${DEVSTR} container...."
+    docker pull mongo
     docker run -v ${DB_FOLDER}:/data/db:rw --name rhino_mongo_${DEVSTR} -d mongo mongod --smallfiles
   fi
 
@@ -214,6 +215,8 @@ EOL
 
   chmod +x ./start-inside.bash
 
+  docker pull container-registry.appsoma.com/rhino2:latest
+
   if [ "$DEVSTR" = "dev" ] && [ ${DEBUG} = 1 ]; then
     docker run \
       --name rhino_${DEVSTR} \
@@ -225,7 +228,7 @@ EOL
       -v `pwd`/rhino_config.json:/config/config.json:ro \
       --link rhino_mongo_${DEVSTR}:mongo \
       -p 8899:8899 \
-      container-registry.appsoma.com/rhino2 \
+      container-registry.appsoma.com/rhino2:latest \
       /rhino/start-inside.bash
   else
     docker run \
@@ -239,7 +242,7 @@ EOL
       -v $LOG_DIR/rhino.log:/rhino/rhino.log:rw \
       --link rhino_mongo_${DEVSTR}:mongo \
       -p 8899:8899 \
-      container-registry.appsoma.com/rhino2 \
+      container-registry.appsoma.com/rhino2:latest \
       /rhino/start-inside.bash
   fi
 fi
