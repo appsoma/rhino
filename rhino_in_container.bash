@@ -125,7 +125,7 @@ if [ "$START" = "1" ]; then
     else
     	echo "Enter a new log directory or press ENTER to accept: ${LOG_DIR}"
     	read _LOG_DIR
-    	if [ "$_LOG_DIR" = "" ]; then
+    	if [ "$_LOG_DIR" != "" ]; then
     		LOG_DIR="$_LOG_DIR"
     	fi
     fi
