@@ -296,7 +296,6 @@ class AppsomaRhinoScheduler(Scheduler):
 				#	continue
 
 				try:
-
 					total_depends = 0
 					success_depends = 0
 					for depends in task.get('depends_on',[]):
@@ -404,8 +403,9 @@ class AppsomaRhinoScheduler(Scheduler):
 						accepted = True
 						break
 				except Exception as e:
-					print "Exception in resourceOffer", e
-					# Go to the next task
+					print "Exception in task", e
+					# KILL this task and go to next
+					db.rhino_tasks.update( {'_id':task['_id']}, { '$set':{'state':'ERROR','mesos_id':mesos_id,'message':str(e)} } )
 
 			if not accepted:
 				mesos_lock.acquire()
