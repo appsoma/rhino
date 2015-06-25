@@ -26,10 +26,9 @@ if len(sys.argv) > 1:
 with open( config_name ) as f:
 	config = json.loads( f.read() )
 
-# The following isn't going to work because the mesos-resolve isn't installed in the
-# rhino container. This is going to be much trickier.
-#mesos_master = subprocess.check_output( [ "mesos-resolve", "zk://10.10.0.71:2181/mesos" ], stderr=subprocess.PIPE )
-#mesos_master = mesos_master.strip()
+mesos_master = subprocess.check_output( [ "/usr/bin/mesos", "resolve", "zk://" + config['zk_ip'] + "/mesos" ], stderr=subprocess.PIPE )
+mesos_master = mesos_master.strip()
+print "MESOS MASTER:", mesos_master
 
 mesos_lock = threading.Lock()
 
@@ -85,10 +84,7 @@ class HttpHandler(BaseHTTPRequestHandler):
 			#subprocess.check_output( "mesos-resolve", "zk://"+config['zk_ip']+"/mesos" )
 
 			global last_registry
-			ip = config['zk_ip'].split(':')[0]
-				# @TODO: Fix this reference to look up the master in zookeeper
-				# This is assuming that master and zk are on the same machine which is wrong.
-			last_registry = json.loads( urllib2.urlopen("http://"+ip+":5050/registrar(1)/registry").read() )
+			last_registry = json.loads( urllib2.urlopen("http://"+mesos_master+"/registrar(1)/registry").read() )
 			print json.dumps(last_registry,indent=4)
 		except Exception, e:
 			print "EXCEPTION1", e
