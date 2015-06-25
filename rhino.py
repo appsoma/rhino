@@ -291,125 +291,128 @@ class AppsomaRhinoScheduler(Scheduler):
 
 			# FIND a pending task that has no waiting dependencies
 			accepted = False
-			for task in tasks:
-				#if task.get('state') != "PENDING":
-				#	continue
+			try:
+				for task in tasks:
+					#if task.get('state') != "PENDING":
+					#	continue
 
-				total_depends = 0
-				success_depends = 0
-				for depends in task.get('depends_on',[]):
-					depend_doc = db.rhino_tasks.find_one( {'name':depends} )
-					if depend_doc:
-						total_depends += 1
-						if depend_doc.get('state','') == 'SUCCESS':
-							success_depends += 1
-					else:
-						print "Ignored reference to", depends
+					total_depends = 0
+					success_depends = 0
+					for depends in task.get('depends_on',[]):
+						depend_doc = db.rhino_tasks.find_one( {'name':depends} )
+						if depend_doc:
+							total_depends += 1
+							if depend_doc.get('state','') == 'SUCCESS':
+								success_depends += 1
+						else:
+							print "Ignored reference to", depends
 
-				if success_depends != total_depends:
-					continue
+					if success_depends != total_depends:
+						continue
 
-				cpus = 1
-				mem = 512
-				disk = 0
+					cpus = 1
+					mem = 512
+					disk = 0
 
-				try:
-					cpus = float(task['requirements']['cpu'])
-				except:
-					pass
+					try:
+						cpus = float(task['requirements']['cpu'])
+					except:
+						pass
 
-				try:
-					mem = float(task['requirements']['mem'])
-				except:
-					pass
+					try:
+						mem = float(task['requirements']['mem'])
+					except:
+						pass
 
-				try:
-					disk = float(task['requirements']['disk'])
-				except:
-					pass
+					try:
+						disk = float(task['requirements']['disk'])
+					except:
+						pass
 
-				if cpus <= offer_cpus and mem <= offer_mem and disk <= offer_disk:
-					mesos_task = mesos_pb2.TaskInfo()
+					if cpus <= offer_cpus and mem <= offer_mem and disk <= offer_disk:
+						mesos_task = mesos_pb2.TaskInfo()
 
-					mesos_task.name = task['name']
+						mesos_task.name = task['name']
 
-					mesos_id = random_string()
-					mesos_task.task_id.value = str(mesos_id)
-					mesos_task.slave_id.value = offer.slave_id.value
+						mesos_id = random_string()
+						mesos_task.task_id.value = str(mesos_id)
+						mesos_task.slave_id.value = offer.slave_id.value
 
-					mesos_task_cpus = mesos_task.resources.add()
-					mesos_task_cpus.name = "cpus"
-					mesos_task_cpus.type = mesos_pb2.Value.SCALAR
-					mesos_task_cpus.scalar.value = cpus
+						mesos_task_cpus = mesos_task.resources.add()
+						mesos_task_cpus.name = "cpus"
+						mesos_task_cpus.type = mesos_pb2.Value.SCALAR
+						mesos_task_cpus.scalar.value = cpus
 
-					mesos_task_mem = mesos_task.resources.add()
-					mesos_task_mem.name = "mem"
-					mesos_task_mem.type = mesos_pb2.Value.SCALAR
-					mesos_task_mem.scalar.value = mem
+						mesos_task_mem = mesos_task.resources.add()
+						mesos_task_mem.name = "mem"
+						mesos_task_mem.type = mesos_pb2.Value.SCALAR
+						mesos_task_mem.scalar.value = mem
 
-					mesos_task_disk = mesos_task.resources.add()
-					mesos_task_disk.name = "disk"
-					mesos_task_disk.type = mesos_pb2.Value.SCALAR
-					mesos_task_disk.scalar.value = disk
+						mesos_task_disk = mesos_task.resources.add()
+						mesos_task_disk.name = "disk"
+						mesos_task_disk.type = mesos_pb2.Value.SCALAR
+						mesos_task_disk.scalar.value = disk
 
-					if task.get('container'):
-						d = mesos_pb2.ContainerInfo.DockerInfo()
-						d.image = task['container']['image']
+						if task.get('container'):
+							d = mesos_pb2.ContainerInfo.DockerInfo()
+							d.image = task['container']['image']
 
-						if 'user' in task.get('container'):
-							user_param = d.parameters.add()
-							user_param.key = "user"
-							user_param.value = task.get('container')['user']
-							pass
+							if 'user' in task.get('container'):
+								user_param = d.parameters.add()
+								user_param.key = "user"
+								user_param.value = task.get('container')['user']
+								pass
 
-						c = mesos_pb2.ContainerInfo()
-						c.type = mesos_pb2.ContainerInfo.DOCKER
-						c.docker.MergeFrom( d )
+							c = mesos_pb2.ContainerInfo()
+							c.type = mesos_pb2.ContainerInfo.DOCKER
+							c.docker.MergeFrom( d )
 
-						vol = c.volumes.add()
-						vol.host_path = "/etc/passwd"
-						vol.container_path = "/etc/passwd"
-						vol.mode = mesos_pb2.Volume.RO
-
-						vol = c.volumes.add()
-						vol.host_path = "/etc/group"
-						vol.container_path = "/etc/group"
-						vol.mode = mesos_pb2.Volume.RO
-
-						for volume in task['container'].get('volumes',[]):
-							vol_split = volume.split(':')
 							vol = c.volumes.add()
-							vol.host_path = vol_split[0]
-							vol.container_path = vol_split[1]
-							if vol_split[2].lower() == "ro":
-								vol.mode = mesos_pb2.Volume.RO
-							elif vol_split[2].lower() == "rw":
-								vol.mode = mesos_pb2.Volume.RW
-							else:
-								raise Exception( "Illegal volume mode" )
+							vol.host_path = "/etc/passwd"
+							vol.container_path = "/etc/passwd"
+							vol.mode = mesos_pb2.Volume.RO
 
-						mesos_task.container.MergeFrom( c )
+							vol = c.volumes.add()
+							vol.host_path = "/etc/group"
+							vol.container_path = "/etc/group"
+							vol.mode = mesos_pb2.Volume.RO
 
-					mesos_task.command.value = task['command']
-					print "cmd", mesos_task.command.value
+							for volume in task['container'].get('volumes',[]):
+								vol_split = volume.split(':')
+								vol = c.volumes.add()
+								vol.host_path = vol_split[0]
+								vol.container_path = vol_split[1]
+								if vol_split[2].lower() == "ro":
+									vol.mode = mesos_pb2.Volume.RO
+								elif vol_split[2].lower() == "rw":
+									vol.mode = mesos_pb2.Volume.RW
+								else:
+									raise Exception( "Illegal volume mode" )
 
-					ret = driver.launchTasks( offer.id, [ mesos_task ] )
+							mesos_task.container.MergeFrom( c )
 
-					# @TODO: Error handing for this whole function
-					print "SUBMITTING", task['name'], "LAUNCH RET", ret
-					db.rhino_tasks.update( {'_id':task['_id']}, { '$set':{'state':'STAGING','mesos_id':mesos_id} } )
+						mesos_task.command.value = task['command']
+						print "cmd", mesos_task.command.value
 
-					accepted = True
-					break
+						ret = driver.launchTasks( offer.id, [ mesos_task ] )
 
-			if not accepted:
-				mesos_lock.acquire()
-				try:
-					driver.declineOffer( offer.id )
-				except Exception as e:
-					raise e
-				finally:
-					mesos_lock.release()
+						# @TODO: Error handing for this whole function
+						print "SUBMITTING", task['name'], "LAUNCH RET", ret
+						db.rhino_tasks.update( {'_id':task['_id']}, { '$set':{'state':'STAGING','mesos_id':mesos_id} } )
+
+						accepted = True
+						break
+			except Exception as e:
+				print "WELDER EXCEPTION", e
+			finally:
+				if not accepted:
+					mesos_lock.acquire()
+					try:
+						driver.declineOffer( offer.id )
+					except Exception as e:
+						raise e
+					finally:
+						mesos_lock.release()
 
 	def slaveLost(self, driver, slave_id):
 		print "SLAVE LOST", slave_id
