@@ -26,9 +26,10 @@ if len(sys.argv) > 1:
 with open( config_name ) as f:
 	config = json.loads( f.read() )
 
-mesos_master = subprocess.check_output( [ "/usr/bin/mesos", "resolve", "zk://" + config['zk_ip'] + "/mesos" ], stderr=subprocess.PIPE )
-mesos_master = mesos_master.strip()
-print "MESOS MASTER:", mesos_master
+# The following isn't going to work because the mesos-resolve isn't installed in the
+# rhino container. This is going to be much trickier.
+#mesos_master = subprocess.check_output( [ "mesos-resolve", "zk://10.10.0.71:2181/mesos" ], stderr=subprocess.PIPE )
+#mesos_master = mesos_master.strip()
 
 mesos_lock = threading.Lock()
 
@@ -84,7 +85,10 @@ class HttpHandler(BaseHTTPRequestHandler):
 			#subprocess.check_output( "mesos-resolve", "zk://"+config['zk_ip']+"/mesos" )
 
 			global last_registry
-			last_registry = json.loads( urllib2.urlopen("http://"+mesos_master+"/registrar(1)/registry").read() )
+			ip = config['zk_ip'].split(':')[0]
+				# @TODO: Fix this reference to look up the master in zookeeper
+				# This is assuming that master and zk are on the same machine which is wrong.
+			last_registry = json.loads( urllib2.urlopen("http://"+ip+":5050/registrar(1)/registry").read() )
 			print json.dumps(last_registry,indent=4)
 		except Exception, e:
 			print "EXCEPTION1", e
@@ -287,10 +291,11 @@ class AppsomaRhinoScheduler(Scheduler):
 
 			# FIND a pending task that has no waiting dependencies
 			accepted = False
-			try:
-				for task in tasks:
-					#if task.get('state') != "PENDING":
-					#	continue
+			for task in tasks:
+				#if task.get('state') != "PENDING":
+				#	continue
+
+				try:
 
 					total_depends = 0
 					success_depends = 0
@@ -398,17 +403,18 @@ class AppsomaRhinoScheduler(Scheduler):
 
 						accepted = True
 						break
-			except Exception as e:
-				print "WELDER EXCEPTION", e
-			finally:
-				if not accepted:
-					mesos_lock.acquire()
-					try:
-						driver.declineOffer( offer.id )
-					except Exception as e:
-						raise e
-					finally:
-						mesos_lock.release()
+				except Exception as e:
+					print "Exception in resourceOffer", e
+					# Go to the next task
+
+			if not accepted:
+				mesos_lock.acquire()
+				try:
+					driver.declineOffer( offer.id )
+				except Exception as e:
+					raise e
+				finally:
+					mesos_lock.release()
 
 	def slaveLost(self, driver, slave_id):
 		print "SLAVE LOST", slave_id
