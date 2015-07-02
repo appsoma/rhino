@@ -61,15 +61,16 @@ fi
 docker ps | grep rhino_mongo_${DEVSTR} > /dev/null
 if [ "$?" = "0" ]; then
   DB_RUNNING=1
+  echo "Mongo running"
 else
   docker rm rhino_mongo_${DEVSTR} 2> /dev/null
   DB_RUNNING=0
 fi
 
-docker ps | grep rhino_prod > /dev/null
+docker ps | grep rhino_${DEVSTR} > /dev/null
 if [ "$?" = "0" ]; then
   RHINO_RUNNING=1
-  echo "Rhino and Mongo already running"
+  echo "Rhino running"
 else
   docker rm rhino_${DEVSTR} 2> /dev/null
   RHINO_RUNNING=0
