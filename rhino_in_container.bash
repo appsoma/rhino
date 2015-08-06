@@ -216,7 +216,7 @@ EOL
 
   chmod +x ./start-inside.bash
 
-  docker pull container-registry.appsoma.com/rhino2:latest
+  docker pull appsoma/rhino:latest
 
   if [ "$DEVSTR" = "dev" ] && [ ${DEBUG} = 1 ]; then
     docker run \
@@ -229,7 +229,7 @@ EOL
       -v `pwd`/rhino_config.json:/config/config.json:ro \
       --link rhino_mongo_${DEVSTR}:mongo \
       -p 8899:8899 \
-      container-registry.appsoma.com/rhino2:latest \
+      appsoma/rhino:latest \
       /rhino/start-inside.bash
   else
     docker run \
@@ -243,7 +243,7 @@ EOL
       -v $LOG_DIR/rhino.log:/rhino/rhino.log:rw \
       --link rhino_mongo_${DEVSTR}:mongo \
       -p 8899:8899 \
-      container-registry.appsoma.com/rhino2:latest \
+      appsoma/rhino:latest \
       /rhino/start-inside.bash
   fi
 fi
