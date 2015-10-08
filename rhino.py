@@ -89,7 +89,7 @@ class HttpHandler(BaseHTTPRequestHandler):
 				# @TODO: Fix this reference to look up the master in zookeeper
 				# This is assuming that master and zk are on the same machine which is wrong.
 			last_registry = json.loads( urllib2.urlopen("http://"+ip+":5050/registrar(1)/registry").read() )
-			print json.dumps(last_registry,indent=4)
+			#print json.dumps(last_registry,indent=4)
 		except Exception, e:
 			print "EXCEPTION1", e
 			pass
@@ -140,6 +140,15 @@ class HttpHandler(BaseHTTPRequestHandler):
 						raise Exception("No slave is capable of handling that request")
 
 				post['state'] = 'PENDING'
+
+				# CHECK if any dependency is already dead
+				print "POST", json.dumps(post,indent=4)
+				for depends in post.get('depends_on',[]):
+					res = db.rhino_tasks.find_one({"name":depends})
+					#print "DEPRES", depends, res['state']
+					if res['state'] == 'ERROR' or res['state'] == 'KILLED':
+						#print "MARK AS KILLED BECAUSE DEAD DEP"
+						post['state'] = 'KILLED'
 
 				# @TODO: Add a unique index on post by name
 				# and check that it exceptions if you try to add a duplicate
@@ -458,13 +467,23 @@ class AppsomaRhinoScheduler(Scheduler):
 			message = "Unknown mesos status code "+str(status.state)
 
 		if kill_depends:
-			tasks = db.rhino_tasks.find( { 'state':'PENDING' } )
+			#all_tasks = list( db.rhino_tasks.find( {  } ) )
+			#for i in all_tasks:
+			#	print "ALLTASK", i
+
+			tasks = list( db.rhino_tasks.find( { 'state':'PENDING' } ) )
+			#for i in tasks:
+			#	print "PENDTASK", i
+
 			doc = db.rhino_tasks.find_one( {'mesos_id':status.task_id.value} )
 
 			def kill_those_that_depend_on( name ):
 				#print "kill_those_that_depend_on", name
+				#print "TASKS=", tasks
 				for task in tasks:
+					#print "EXAMINE", task.get('name')
 					for depends in task.get('depends_on',[]):
+						#print "EXDEP", depends, name
 						if depends == name:
 							#print "KILLING", task['name'], "BECAUSE IT DEPENDS ON", name
 
