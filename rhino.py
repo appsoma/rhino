@@ -365,12 +365,12 @@ class AppsomaRhinoScheduler(Scheduler):
 						if task.get('container'):
 							d = mesos_pb2.ContainerInfo.DockerInfo()
 							d.image = task['container']['image']
+							#print "image", d.image
 
 							if 'user' in task.get('container'):
 								user_param = d.parameters.add()
 								user_param.key = "user"
 								user_param.value = task.get('container')['user']
-								pass
 
 							c = mesos_pb2.ContainerInfo()
 							c.type = mesos_pb2.ContainerInfo.DOCKER
@@ -397,6 +397,7 @@ class AppsomaRhinoScheduler(Scheduler):
 									vol.mode = mesos_pb2.Volume.RW
 								else:
 									raise Exception( "Illegal volume mode" )
+								#print "VOL", vol.host_path, vol.container_path, vol.mode
 
 							mesos_task.container.MergeFrom( c )
 
