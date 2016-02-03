@@ -1,8 +1,12 @@
-FROM ubuntu:14.10
-RUN apt-get update && apt-get install -y python-setuptools build-essential python-dev
-RUN easy_install pymongo
-RUN apt-get update && apt-get update && apt-get install -y libsvn-dev
-COPY mesos_interface/*.py /rhino/mesos/interface/
-COPY mesos_py_2/ /rhino/mesos_py_2/
-RUN apt-get update && apt-get install python-protobuf
-RUN apt-get update && apt-get install git
+FROM debian:8
+RUN apt-get update && apt-get install -y libsvn1 libcurl3 python-pip python-setuptools
+RUN pip install pymongo
+RUN easy_install http://downloads.mesosphere.io/master/debian/8/mesos-0.26.0-py2.7-linux-x86_64.egg
+ENV PYTHONPATH ${PYTHONPATH}:/usr/lib/python2.7/site-packages/
+COPY ./rhino.py /rhino/rhino.py
+
+EXPOSE 8899
+WORKDIR /rhino
+CMD python rhino.py
+
+
