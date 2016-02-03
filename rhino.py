@@ -94,7 +94,6 @@ class HttpHandler(BaseHTTPRequestHandler):
             print "EXCEPTION1", exc
 
         try:
-            print "MY PATH", path
             if self.path == '/tasks':
                 content_len = int(self.headers.getheader('content-length', 0))
                 post = json.loads(self.rfile.read(content_len))
@@ -164,9 +163,9 @@ class HttpHandler(BaseHTTPRequestHandler):
                 self.wfile.write(json_block)
             else:
                 raise Exception("Not found")
-        except Exception as e:
-            print "EXCEPTION2", e
-            self.return_exception(e)
+        except Exception as exc:
+            print "EXCEPTION2", exc
+            self.return_exception(exc)
 
     def do_GET(self):
         try:
@@ -235,7 +234,7 @@ class HttpHandler(BaseHTTPRequestHandler):
             self.return_exception(e)
 
     def log_message(self, format_str, *args):
-        return
+        print(args)
 
 
 def web_server():
