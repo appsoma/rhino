@@ -53,6 +53,7 @@ if [ "$ACTION" == "start" ] || [ "$ACTION" == "restart" ]; then
 	},
 	"healthChecks": [{
 	    "protocol": "HTTP",
+	    "path": "/health",
 	    "gracePeriodSeconds": 600,
 	    "intervalSeconds": 30,
 	    "portIndex": 0,
