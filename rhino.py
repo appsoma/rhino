@@ -431,7 +431,7 @@ class AppsomaRhinoScheduler(Scheduler):
 
         ret_code = -9999
         kill_depends = False
-        message = ''
+        message = 'No message'
 
         if status.state == mesos_pb2.TASK_RUNNING:
             state = "RUNNING"
@@ -445,20 +445,21 @@ class AppsomaRhinoScheduler(Scheduler):
             message = status.message
             kill_depends = True
 
-        elif status.state == mesos_pb2.TASK_FINISHED or status.state == mesos_pb2.TASK_FAILED:
-            match = re.search(r'^Command exited with status (\d+)$', status.message)
+        elif status.state == mesos_pb2.TASK_FINISHED:
+            state = 'SUCCESS'
+            ret_code = 0
+            message = status.message
+        elif status.state == mesos_pb2.TASK_FAILED:
+            match = re.search(r'exited with status (\d+)$', status.message)
             if match:
                 ret_code = int(match.group(1))
                 print "RET CODE", ret_code
             else:
-                print "NO MATCH FOR RETURN CODE"
+                print "NO MATCH FOR RETURN CODE, Parse error in status?: " + status.message
 
-            if ret_code == 0 and status.state == mesos_pb2.TASK_FINISHED:
-                state = 'SUCCESS'
-            else:
-                state = 'ERROR'
-                message = status.message
-                kill_depends = True
+            state = 'ERROR'
+            message = status.message
+            kill_depends = True
 
         else:
             state = 'ERROR'

@@ -200,7 +200,7 @@
       <paths name="welder_dev">
         <serverdata>
           <mappings>
-            <mapping deploy="/projects/rhino" local="$PROJECT_DIR$" web="/" />
+            <mapping deploy="/opt/rhino" local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>
