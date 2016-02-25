@@ -13,7 +13,7 @@ You will need a running MongoDB server available on the network for session and 
 
 The easiest way to run rhino is using a docker container.
 
-	docker run -d -P -e RHINO_MONGO_HOST=mongo.marathon.mesos -e RHINO_MONGO_PORT=27017 appsoma:rhino
+	docker run -d -P -e RHINO_MONGO_HOST=mongo.marathon.mesos -e RHINO_MONGO_PORT=27017 appsoma/rhino
 
 To run on a local machine, you will need to install the [Mesos Python Egg](https://open.mesosphere.com/downloads/mesos/) and `pip install pymongo`
 
