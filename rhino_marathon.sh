@@ -33,7 +33,7 @@ if [ "$ACTION" == "start" ] || [ "$ACTION" == "restart" ]; then
 	"mem": 512.0,
 	"instances": 1,
 	"env": {
-		"RHINO_MONGO_HOST": "mongo.marathon.mesos",
+		"RHINO_MONGO_HOST": "mongo.marathon.slave.mesos",
 		"RHINO_MONGO_PORT": "27017"
 	},
 	"constraints": [ ["node_type", "LIKE", "master"] ],
