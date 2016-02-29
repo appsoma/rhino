@@ -89,14 +89,14 @@ class HttpHandler(BaseHTTPRequestHandler):
             global last_registry
             # This assumes that Mesos DNS is functioning and can look up leader.mesos.
             last_registry = json.loads(urllib2.urlopen("http://leader.mesos:5050/registrar(1)/registry").read())
-            #print json.dumps(last_registry, indent=4)
         except Exception as exc:
-            print "EXCEPTION1", exc
+            print "Error while reading registry from Mesos Leader", exc
 
         try:
             if self.path == '/tasks':
                 content_len = int(self.headers.getheader('content-length', 0))
-                post = json.loads(self.rfile.read(content_len))
+                content = self.rfile.read(content_len)
+                post = json.loads(content)
 
                 # VALIDATE the post block
                 if 'name' not in post:
@@ -119,28 +119,34 @@ class HttpHandler(BaseHTTPRequestHandler):
                         for volume in post['container']['volumes']:
                             if not isinstance(volume, basestring):
                                 raise Exception("'volumes' must be a list of strings")
+        except Exception as exc:
+            print "Exception while validating post block", exc
+            import traceback
+            traceback.print_exc()
+            self.return_exception(exc)
 
-                # CHECK if there exists any slave that is capable of handling the requested task
-                # IF not then we need to return a friendly error.
-                if last_registry:
-                    found_slave_that_fits = False
-                    for slave in last_registry['slaves']['slaves']:
-                        cpus = 0
-                        mem = 0
-                        disk = 0
-                        for res in slave['info']['resources']:
-                            if res['name'] == 'cpus':
-                                cpus = int(res['scalar']['value'])
-                            if res['name'] == 'mem':
-                                mem = int(res['scalar']['value'])
-                            if res['name'] == 'disk':
-                                disk = int(res['scalar']['value'])
-                        if int(post['requirements']['cpus']) <= cpus and int(
-                                post['requirements']['mem']) <= mem and int(post['requirements']['disk']) <= disk:
-                            found_slave_that_fits = True
-                            break
-                    if not found_slave_that_fits:
-                        raise Exception("No slave is capable of handling that request")
+        try:
+            # CHECK if there exists any slave that is capable of handling the requested task
+            # IF not then we need to return a friendly error.
+            if last_registry:
+                found_slave_that_fits = False
+                for slave in last_registry['slaves']['slaves']:
+                    cpus = 0
+                    mem = 0
+                    disk = 0
+                    for res in slave['info']['resources']:
+                        if res['name'] == 'cpus':
+                            cpus = int(res['scalar']['value'])
+                        if res['name'] == 'mem':
+                            mem = int(res['scalar']['value'])
+                        if res['name'] == 'disk':
+                            disk = int(res['scalar']['value'])
+                    if int(post['requirements']['cpus']) <= cpus and int(
+                            post['requirements']['mem']) <= mem and int(post['requirements']['disk']) <= disk:
+                        found_slave_that_fits = True
+                        break
+                if not found_slave_that_fits:
+                    raise Exception("No slave is capable of handling that request")
 
                 post['state'] = 'PENDING'
 
@@ -148,8 +154,9 @@ class HttpHandler(BaseHTTPRequestHandler):
                 print "POST", json.dumps(post, indent=4)
                 for depends in post.get('depends_on', []):
                     res = db.rhino_tasks.find_one({"name": depends})
-                    if res['state'] == 'ERROR' or res['state'] == 'KILLED':
-                        post['state'] = 'KILLED'
+                    if res is not None and 'state' in res:
+                        if res['state'] == 'ERROR' or res['state'] == 'KILLED':
+                            post['state'] = 'KILLED'
 
                 # @TODO: Add a unique index on post by name
                 # and check that it exceptions if you try to add a duplicate
@@ -163,8 +170,11 @@ class HttpHandler(BaseHTTPRequestHandler):
                 self.wfile.write(json_block)
             else:
                 raise Exception("Not found")
+
         except Exception as exc:
-            print "EXCEPTION2", exc
+            print "Error submitting job", exc
+            import traceback
+            traceback.print_exc()
             self.return_exception(exc)
 
     def do_GET(self):
