@@ -34,7 +34,8 @@ if [ "$ACTION" == "start" ] || [ "$ACTION" == "restart" ]; then
 	"instances": 1,
 	"env": {
 		"RHINO_MONGO_HOST": "mongo.marathon.slave.mesos",
-		"RHINO_MONGO_PORT": "27017"
+		"RHINO_MONGO_PORT": "27017",
+		"RHINO_ZOOKEEPER_HOST_LIST": "master.mesos:2181"
 	},
 	"constraints": [ ["node_type", "LIKE", "master"] ],
 	"container": {

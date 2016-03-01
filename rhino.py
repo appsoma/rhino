@@ -21,6 +21,8 @@ if os.environ.get("RHINO_MONGO_HOST", None) is not None:
     config['mongodb']['host'] = os.environ.get("RHINO_MONGO_HOST")
 if os.environ.get("RHINO_MONGO_PORT", None) is not None:
     config['mongodb']['port'] = int(os.environ.get("RHINO_MONGO_PORT"))
+if os.environ.get("RHINO_ZOOKEEPER_HOST_LIST", None) is not None:
+    config['zookeeper_hosts'] = os.environ.get("RHINO_ZOOKEEPER_HOST_LIST")
 
 if (not 'port' in config['mongodb']) and (not 'host' in config['mongodb']):
     try:
@@ -31,6 +33,8 @@ if (not 'port' in config['mongodb']) and (not 'host' in config['mongodb']):
         config['mongodb']['host'] = "mongo.marathon.mesos"
         config['mongodb']['port'] = 27017
 
+if 'zookeeper_hosts' not in config:
+    config['zookeeper_hosts'] = "master.mesos:2181"
 
 mesos_lock = threading.Lock()
 
@@ -518,7 +522,7 @@ if __name__ == '__main__':
         mesos_driver = MesosSchedulerDriver(
             AppsomaRhinoScheduler(),
             framework,
-            "zk://master.mesos:2181/mesos"
+            "zk://" + config['zookeeper_hosts'] + "/mesos"
         )
         mesos_driver.run()
     except KeyboardInterrupt:
