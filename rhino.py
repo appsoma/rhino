@@ -10,7 +10,6 @@ import random
 import string
 import urllib2
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
-
 from mesos.native import MesosSchedulerDriver
 from mesos.interface import Scheduler
 from mesos.interface import mesos_pb2
@@ -49,6 +48,8 @@ client = pymongo.MongoClient('mongodb://' + config['mongodb']['host'], config['m
 db = client.rhino
 
 last_registry = None
+leader_hostname = ""
+leader_port = ""
 
 
 class HttpHandler(BaseHTTPRequestHandler):
@@ -61,38 +62,11 @@ class HttpHandler(BaseHTTPRequestHandler):
         self.wfile.write(json_block)
 
     def do_POST(self):
-        """
-        {
-            "name": "some_step_name",
-            "command": "some_command",
-            "depends_on": [
-                // Optional
-                "other_job_name"
-            ],
-            "user": "some_user",
-                // Optional, default=root
-            "environment": {
-                // Optional
-                "some_environment_variable": "value"
-            },
-            "requirements": {
-                "cpus": 1,
-                "mem": 512
-            },
-            "container": {
-                // Optional
-                "image": "a_docker_container",
-                "volumes": [
-                    "/host:/guest:ro"
-                ]
-            }
-        }
-        """
-
         try:
             global last_registry
-            # This assumes that Mesos DNS is functioning and can look up leader.mesos.
-            last_registry = json.loads(urllib2.urlopen("http://leader.mesos:5050/registrar(1)/registry").read())
+            global leader_hostname
+            global leader_port
+            last_registry = json.loads(urllib2.urlopen("http://" + leader_hostname + ":" + leader_port + "/registrar(1)/registry").read())
         except Exception as exc:
             print "Error while reading registry from Mesos Leader", exc
 
@@ -257,6 +231,7 @@ def web_server():
 
 
 class AppsomaRhinoScheduler(Scheduler):
+
     @staticmethod
     def disconnected(driver):
         print "DISCONNECTED"
@@ -279,11 +254,19 @@ class AppsomaRhinoScheduler(Scheduler):
 
     @staticmethod
     def registered(driver, framework_id, master_info):
-        print "REGISTERED", framework_id
+        global leader_hostname
+        global leader_port
+        leader_hostname = master_info.hostname
+        leader_port = str(master_info.port)
+        print "REGISTERED " + framework_id.value + ", With leader at " + leader_hostname + ":" + leader_port
 
     @staticmethod
     def reregistered(driver, master_info):
-        print "RE-REGISTERED", master_info
+        global leader_hostname
+        global leader_port
+        leader_hostname = master_info.hostname
+        leader_port = master_info.port
+        print "RE-REGISTERED With leader at " + leader_hostname + ":" + leader_port
 
     @staticmethod
     def resourceOffers(driver, offers):
